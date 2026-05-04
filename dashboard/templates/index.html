@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Traffic System — AL-ALAMEIN</title>
+    <style>
+        /* ── General ── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f1117;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            padding: 30px 0 20px;
+            border-bottom: 1px solid #2a2d3a;
+            margin-bottom: 30px;
+        }
+        .header h1 { font-size: 2rem; color: #00d4aa; }
+        .header p  { color: #888; margin-top: 6px; }
+
+        /* ── Status bar ── */
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .status-item {
+            background: #1a1d2e;
+            border: 1px solid #2a2d3a;
+            border-radius: 10px;
+            padding: 12px 24px;
+            text-align: center;
+        }
+        .status-item .label { font-size: 0.75rem; color: #888; }
+        .status-item .value { font-size: 1.1rem; font-weight: bold; color: #00d4aa; margin-top: 4px; }
+
+        /* ── Lane grid ── */
+        .lanes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto 30px;
+        }
+
+        /* ── Lane card ── */
+        .lane-card {
+            background: #1a1d2e;
+            border: 2px solid #2a2d3a;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .lane-card.green { border-color: #00d4aa; box-shadow: 0 0 20px rgba(0,212,170,0.3); }
+        .lane-card.red   { border-color: #ff4757; }
+
+        .lane-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+
+        /* ── Traffic light ── */
+        .traffic-light {
+            width: 70px;
+            height: 180px;
+            background: #111;
+            border-radius: 12px;
+            margin: 0 auto 20px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            border: 2px solid #333;
+        }
+        .bulb {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            transition: all 0.4s ease;
+        }
+        .bulb.red-off  { background: #3a1a1a; }
+        .bulb.red-on   { background: #ff4757; box-shadow: 0 0 18px #ff4757; }
+        .bulb.yellow   { background: #2a2a1a; }
+        .bulb.green-off{ background: #1a3a2a; }
+        .bulb.green-on { background: #00d4aa; box-shadow: 0 0 18px #00d4aa; }
+
+        /* ── Distance ── */
+        .distance-info {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 16px;
+        }
+        .distance-info span {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fff;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* ── Car detected badge ── */
+        .car-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        .car-badge.detected { background: #ff475720; color: #ff4757; border: 1px solid #ff4757; }
+        .car-badge.empty    { background: #ffffff10; color: #888;    border: 1px solid #333; }
+
+        /* ── Override buttons ── */
+        .override-btns { display: flex; gap: 8px; justify-content: center; }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-green { background: #00d4aa20; color: #00d4aa; border: 1px solid #00d4aa; }
+        .btn-red   { background: #ff475720; color: #ff4757; border: 1px solid #ff4757; }
+        .btn:hover { opacity: 0.8; transform: scale(1.05); }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            color: #444;
+            font-size: 0.8rem;
+            margin-top: 20px;
+        }
+
+        /* ── Pulse animation for green ── */
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 20px rgba(0,212,170,0.3); }
+            50%  { box-shadow: 0 0 40px rgba(0,212,170,0.6); }
+            100% { box-shadow: 0 0 20px rgba(0,212,170,0.3); }
+        }
+        .lane-card.green { animation: pulse 2s infinite; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <h1>🚦 Smart Traffic System</h1>
+    <p>AL-ALAMEIN Smart City — Real-time Traffic Monitor</p>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+    <div class="status-item">
+        <div class="label">System Status</div>
+        <div class="value" id="sys-status">🟢 Online</div>
+    </div>
+    <div class="status-item">
+        <div class="label">Active Green Lane</div>
+        <div class="value" id="green-lane">—</div>
+    </div>
+    <div class="status-item">
+        <div class="label">Last Updated</div>
+        <div class="value" id="timestamp">—</div>
+    </div>
+</div>
+
+<!-- Lane cards -->
+<div class="lanes-grid" id="lanes-grid">
+    <!-- Generated by JavaScript below -->
+</div>
+
+<div class="footer">
+    CSE 464 — IoT Final Project | AL-ALAMEIN International University
+</div>
+
+<script>
+    const NUM_LANES = 4;
+
+    // ── Build lane cards on page load ──
+    function buildCards() {
+        const grid = document.getElementById("lanes-grid");
+        for (let i = 0; i < NUM_LANES; i++) {
+            grid.innerHTML += `
+            <div class="lane-card red" id="lane-${i}">
+                <div class="lane-title">Lane ${i}</div>
+                <div class="traffic-light">
+                    <div class="bulb red-on"    id="red-${i}"></div>
+                    <div class="bulb yellow"    id="yellow-${i}"></div>
+                    <div class="bulb green-off" id="green-${i}"></div>
+                </div>
+                <div class="distance-info">
+                    Distance
+                    <span id="dist-${i}">— cm</span>
+                </div>
+                <div class="car-badge empty" id="badge-${i}">No car</div>
+                <div class="override-btns">
+                    <button class="btn btn-green" onclick="override(${i}, 'green')">Force 🟢</button>
+                    <button class="btn btn-red"   onclick="override(${i}, 'red')">Force 🔴</button>
+                </div>
+            </div>`;
+        }
+    }
+
+    // ── Update dashboard with new data ──
+    function updateDashboard(data) {
+        // Update status bar
+        document.getElementById("timestamp").textContent = data.timestamp;
+        document.getElementById("green-lane").textContent =
+            data.green_lane !== null ? `Lane ${data.green_lane}` : "None";
+
+        // Update each lane card
+        for (let i = 0; i < NUM_LANES; i++) {
+            const isGreen  = data.light_status[i];
+            const distance = data.distances[i];
+            const hasCar   = distance < 50;
+
+            // Card color
+            const card = document.getElementById(`lane-${i}`);
+            card.className = `lane-card ${isGreen ? "green" : "red"}`;
+
+            // Traffic light bulbs
+            document.getElementById(`red-${i}`).className   = `bulb ${isGreen ? "red-off" : "red-on"}`;
+            document.getElementById(`green-${i}`).className = `bulb ${isGreen ? "green-on" : "green-off"}`;
+
+            // Distance
+            document.getElementById(`dist-${i}`).textContent = `${distance} cm`;
+
+            // Car badge
+            const badge = document.getElementById(`badge-${i}`);
+            badge.className   = `car-badge ${hasCar ? "detected" : "empty"}`;
+            badge.textContent = hasCar ? "🚗 Car detected" : "Empty";
+        }
+    }
+
+    // ── Manual override ──
+    function override(lane, action) {
+        fetch("/api/override", {
+            method : "POST",
+            headers: {"Content-Type": "application/json"},
+            body   : JSON.stringify({lane, action})
+        })
+        .then(r => r.json())
+        .then(d => console.log("Override:", d.message));
+    }
+
+    // ── Fetch latest data every 2 seconds ──
+    function fetchStatus() {
+        fetch("/api/status")
+            .then(r => r.json())
+            .then(data => updateDashboard(data))
+            .catch(err => {
+                document.getElementById("sys-status").textContent = "🔴 Offline";
+            });
+    }
+
+    // ── Start everything ──
+    buildCards();
+    fetchStatus();
+    setInterval(fetchStatus, 2000);
+</script>
+</body>
+</html>

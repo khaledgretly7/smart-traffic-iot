@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+
+# AWS Certificates — NEVER upload these to GitHub!
+*.pem
+*.crt
+*.key
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+desktop.ini
