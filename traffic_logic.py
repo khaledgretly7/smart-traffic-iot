@@ -1,7 +1,7 @@
-# traffic_logic.py — Updated with MQTT
+# traffic_logic.py — Updated with MQTT + Real GPIO
 import time
 from config import NUMBER_OF_LANES, GREEN_LIGHT_TIME, MIN_DISTANCE_CM
-from simulator import read_all_lanes
+from gpio_controller import read_all_lanes, set_led, setup_pins, cleanup
 from mqtt_client import create_client, publish_sensor_data
 
 # Track light status: True=Green, False=Red
@@ -25,6 +25,7 @@ def set_lights(green_lane):
 
     for lane in range(NUMBER_OF_LANES):
         light_status[lane] = (lane == green_lane)
+        set_led(lane, lane == green_lane)
 
     print("\n  🚦 Light Status:")
     for lane in range(NUMBER_OF_LANES):
@@ -37,7 +38,7 @@ def run_traffic_cycle(mqtt_client):
     print("📡 Reading all lane sensors...")
     print("="*40)
 
-    # Step 1: Read sensors
+    # Step 1: Read real sensors
     distances = read_all_lanes()
 
     # Step 2: Find busiest lane
@@ -62,6 +63,9 @@ def run_traffic_cycle(mqtt_client):
 if __name__ == "__main__":
     print("🚦 Smart Traffic System Starting...")
 
+    # Setup real GPIO pins
+    setup_pins()
+
     # Connect to MQTT
     mqtt_client = create_client()
 
@@ -74,3 +78,4 @@ if __name__ == "__main__":
         set_lights(None)
         mqtt_client.loop_stop()
         mqtt_client.disconnect()
+        cleanup()

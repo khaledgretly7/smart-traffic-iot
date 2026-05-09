@@ -10,8 +10,8 @@ MQTT_TOPIC_CONTROL = "traffic/control"   # Topic for light control
 
 # ─── Traffic Settings ────────────────────────────
 NUMBER_OF_LANES     = 4     # We have 4 lanes
-GREEN_LIGHT_TIME    = 10    # Seconds a lane stays green
-MIN_DISTANCE_CM     = 50    # If car is closer than this → car detected
+GREEN_LIGHT_TIME    = 5    # Seconds a lane stays green
+MIN_DISTANCE_CM     = 25    # If car is closer than this → car detected
 
 # ─── GPIO Pin Numbers (used when Pi arrives) ─────
 LANES = [
