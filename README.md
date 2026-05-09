@@ -50,6 +50,9 @@ An IoT system that:
 │
 [Web Dashboard 🌐]
 
+<img width="1152" height="928" alt="system smart architicture" src="https://github.com/user-attachments/assets/e6a84356-1073-4d57-9f0d-410d5d58488d" />
+
+
 ### 3-Layer IoT Architecture
 
 | Layer | Components |
